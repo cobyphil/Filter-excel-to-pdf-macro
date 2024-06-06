@@ -1,0 +1,70 @@
+Sub FilterPivotAndSaveAsPDF()
+    Dim pt As PivotTable
+    Dim pf As PivotField
+    Dim pi As PivotItem
+    Dim ws As Worksheet
+    Dim pdfPath As String
+    Dim uniqueValue As String
+    Dim ptName As String
+    Dim pfName As String
+    
+    ' Set the worksheet name and pivot table name
+    Dim wsName As String
+    wsName = "Sheet1" ' Change to your sheet name
+    ptName = "PivotTable1" ' Change to your pivot table name
+    pfName = "Field1" ' Change to your pivot field name
+    
+    ' Check if the worksheet exists
+    On Error Resume Next
+    Set ws = ThisWorkbook.Sheets(wsName)
+    On Error GoTo 0
+    
+    If ws Is Nothing Then
+        MsgBox "Worksheet '" & wsName & "' not found.", vbCritical
+        Exit Sub
+    End If
+    
+    ' Check if the pivot table exists in the worksheet
+    On Error Resume Next
+    Set pt = ws.PivotTables(ptName)
+    On Error GoTo 0
+    
+    If pt Is Nothing Then
+        MsgBox "PivotTable '" & ptName & "' not found in the worksheet '" & wsName & "'.", vbCritical
+        Exit Sub
+    End If
+    
+    ' Check if the pivot field exists in the pivot table
+    On Error Resume Next
+    Set pf = pt.PivotFields(pfName)
+    On Error GoTo 0
+    
+    If pf Is Nothing Then
+        MsgBox "PivotField '" & pfName & "' not found in PivotTable '" & ptName & "'.", vbCritical
+        Exit Sub
+    End If
+    
+    ' Loop through each unique item in the pivot field
+    For Each pi In pf.PivotItems
+        uniqueValue = pi.Name
+        
+        ' Filter the pivot table by the unique item
+        pt.ClearAllFilters
+        pf.CurrentPage = uniqueValue
+        
+        ' Set the path and file name for the PDF
+        pdfPath = ThisWorkbook.Path & "\" & uniqueValue & ".pdf"
+        
+        ' Export the filtered pivot table to PDF
+        ws.ExportAsFixedFormat Type:=xlTypePDF, Filename:=pdfPath, Quality:=xlQualityStandard, _
+                               IncludeDocProperties:=True, IgnorePrintAreas:=False, OpenAfterPublish:=False
+        
+        ' Optional: Display a message
+        ' MsgBox "Saved " & uniqueValue & " as PDF.", vbInformation
+    Next pi
+    
+    ' Clear filters after processing
+    pt.ClearAllFilters
+    
+    MsgBox "All unique values have been filtered and saved as PDF.", vbInformation
+End Sub
